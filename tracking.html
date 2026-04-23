@@ -1,0 +1,1468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Police Patrol Tracking System</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg,#1c3c52 0%, #0b1f2a 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 450px;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .map-section {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .map-container {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            height: 600px;
+            position: relative;
+        }
+
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+
+        .map-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .map-btn {
+            background: white;
+            border: none;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .map-btn:hover {
+            background: #f0f0f0;
+            transform: translateY(-1px);
+        }
+
+        .map-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .emergency-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .control-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            height: fit-content;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .stat-card.available {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+        }
+
+        .stat-card.busy {
+            background: linear-gradient(135deg, #ff9f43, #f39c12);
+        }
+
+        .stat-card.emergency {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+        }
+
+        .stat-card h3 {
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+        }
+
+        .stat-card p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .panel-section {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .panel-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .panel-section h3 {
+            margin-bottom: 15px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+            width: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-emergency {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
+        }
+
+        .btn-gps {
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            margin-bottom: 10px;
+        }
+
+        .gps-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .gps-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #dc3545;
+            animation: blink 1s infinite;
+        }
+
+        .gps-indicator.active {
+            background: #28a745;
+            animation: none;
+        }
+
+        .gps-indicator.searching {
+            background: #ffc107;
+            animation: pulse-yellow 1s infinite;
+        }
+
+        @keyframes blink {
+            50% { opacity: 0.3; }
+        }
+
+        @keyframes pulse-yellow {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .location-info {
+            background: #e8f5e8;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+
+        .location-info.error {
+            background: #ffe6e6;
+            color: #d63031;
+        }
+
+        .accuracy-indicator {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 5px;
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .accuracy-bar {
+            width: 50px;
+            height: 4px;
+            background: #eee;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .accuracy-fill {
+            height: 100%;
+            transition: width 0.3s;
+        }
+
+        .accuracy-high { background: #28a745; }
+        .accuracy-medium { background: #ffc107; }
+        .accuracy-low { background: #dc3545; }
+
+        .route-info {
+            background: #e8f4fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .route-info h4 {
+            color: #0056b3;
+            margin-bottom: 10px;
+        }
+
+        .route-info p {
+            margin: 5px 0;
+            color: #004085;
+            font-size: 0.9rem;
+        }
+
+        .ambulance-list {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .ambulance-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .ambulance-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .ambulance-item.emergency {
+            border-left-color: #e74c3c;
+            background: #fdf2f2;
+        }
+
+        .ambulance-info h4 {
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        .ambulance-info p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-available { background: #d4edda; color: #155724; }
+        .status-busy { background: #fff3cd; color: #856404; }
+        .status-emergency { background: #f8d7da; color: #721c24; }
+        .status-maintenance { background: #e2e3e5; color: #383d41; }
+
+        .ambulance-controls {
+            display: flex;
+            gap: 5px;
+        }
+
+        .btn-small {
+            padding: 5px 10px;
+            font-size: 0.8rem;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-update { background: #ffc107; color: #212529; }
+        .btn-update:hover { background: #e0a800; }
+        .btn-remove { background: #dc3545; color: white; }
+        .btn-remove:hover { background: #c82333; }
+        .btn-route { background: #17a2b8; color: white; }
+        .btn-route:hover { background: #138496; }
+
+        .emergency-alert {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+
+        .emergency-queue {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .emergency-item {
+            background: #fff5f5;
+            border: 1px solid #fed7d7;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+        }
+
+        .emergency-item h5 {
+            color: #c53030;
+            margin-bottom: 5px;
+        }
+
+        .emergency-item p {
+            font-size: 0.9rem;
+            color: #744210;
+            margin: 2px 0;
+        }
+
+        .custom-popup {
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .custom-popup h4 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .custom-popup p {
+            margin: 5px 0;
+            color: #666;
+        }
+
+        .geofence-controls {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .geofence-controls h4 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            z-index: 2000;
+            transform: translateX(400px);
+            transition: transform 0.3s;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.error {
+            background: #dc3545;
+        }
+
+        .notification.warning {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Police Vehicle Tracking System</h1>
+            <p>Real-time GPS tracking, route optimization, and emergency dispatch</p>
+        </div>
+
+        <div class="main-grid">
+            <div class="map-section">
+                <div class="map-container">
+                    <div id="map"></div>
+                    <div class="map-controls">
+                        <button class="map-btn" id="toggleTracking">📍 GPS Tracking</button>
+                        <button class="map-btn" id="showAllRoutes">🗺️ Show Routes</button>
+                        <button class="map-btn" id="clearRoutes">❌ Clear Routes</button>
+                        <button class="map-btn" id="findNearest">🎯 Find Nearest</button>
+                        <button class="map-btn" id="centerOnUser">📍 My Location</button>
+                    </div>
+                </div>
+
+                <div class="emergency-panel">
+                    <h3>🚨 Emergency Dispatch</h3>
+                    <form id="emergencyForm">
+                        <div class="form-group">
+                            <label for="emergencyAddress">Emergency Location:</label>
+                            <input type="text" id="emergencyAddress" placeholder="Enter address or click on map" required>
+                            <button type="button" id="useCurrentLocation" class="btn" style="margin-top: 5px; font-size: 0.9rem;">📍 Use My Current Location</button>
+                        </div>
+                        <div class="form-group">
+                            <label for="emergencyType">Emergency Type:</label>
+                            <select id="emergencyType" required>
+                                <option value="cardiac">Murder</option>
+                                <option value="trauma">Trauma/Accident</option>
+                                <option value="respiratory">Threat</option>
+                                <option value="stroke">Invasion </option>
+                                <option value="other">Other Emergency</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="emergencyNotes">Additional Notes:</label>
+                            <textarea id="emergencyNotes" rows="2" placeholder="Patient condition, special instructions..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-emergency">🚨 Dispatch Nearest Police Vehicle </button>
+                    </form>
+
+                    <div id="emergencyQueue" class="emergency-queue" style="display: none;">
+                        <h4>Active Emergencies</h4>
+                        <div id="emergencyList"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-panel">
+                <div class="stats-grid">
+                    <div class="stat-card available">
+                        <h3 id="availableCount">0</h3>
+                        <p>Available</p>
+                    </div>
+                    <div class="stat-card busy">
+                        <h3 id="busyCount">6</h3>
+                        <p>On Duty</p>
+                    </div>
+                    <div class="stat-card emergency">
+                        <h3 id="emergencyCount">0</h3>
+                        <p>Emergency</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="totalCount">0</h3>
+                        <p>Total Fleet</p>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <div class="gps-status">
+                        <div class="gps-indicator" id="gpsIndicator"></div>
+                        <span id="gpsStatus">GPS Disconnected</span>
+                    </div>
+                    <button class="btn btn-gps" id="enableGPS">📡 Enable GPS Tracking</button>
+                    
+                    <div id="locationInfo" class="location-info" style="display: none;">
+                        <div><strong>Coordinates:</strong> <span id="coordinates">-</span></div>
+                        <div><strong>Address:</strong> <span id="address">Loading...</span></div>
+                        <div class="accuracy-indicator">
+                            <span>Accuracy:</span>
+                            <div class="accuracy-bar">
+                                <div class="accuracy-fill" id="accuracyFill"></div>
+                            </div>
+                            <span id="accuracyText">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3>➕ Add New Patrol Car</h3>
+                    <form id="ambulanceForm">
+                        <div class="form-group">
+                            <label for="ambulanceId">Patrol ID:</label>
+                            <input type="text" id="ambulanceId" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="driverName">Driver Name:</label>
+                            <input type="text" id="driverName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="status">Status:</label>
+                            <select id="status" required>
+                                <option value="available">Available</option>
+                                <option value="busy">On Duty</option>
+                                <option value="emergency">Emergency</option>
+                                <option value="maintenance">Maintenance</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn">Add Patrol Car</button>
+                    </form>
+                </div>
+
+                <div class="geofence-controls">
+                    <h4>🔍 Geofencing</h4>
+                    <div class="form-group">
+                        <label for="geofenceRadius">Alert Radius (km):</label>
+                        <input type="range" id="geofenceRadius" min="1" max="10" value="5" step="0.5">
+                        <span id="radiusValue">5 km</span>
+                    </div>
+                    <button class="btn" id="toggleGeofence" style="font-size: 0.9rem;">Enable Geofencing</button>
+                </div>
+
+                <div class="panel-section" id="routeInfoPanel" style="display: none;">
+                    <h3>🗺️ Route Information</h3>
+                    <div id="routeDetails" class="route-info"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="ambulance-list">
+            <h2>Active Cars</h2>
+            <div id="ambulanceList"></div>
+        </div>
+    </div>
+
+    <div id="notification" class="notification"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+    <script>
+        class AdvancedAmbulanceTracker {
+            constructor() {
+                this.ambulances = [];
+                this.emergencies = [];
+                this.map = null;
+                this.markers = {};
+                this.routes = {};
+                this.gpsEnabled = false;
+                this.userLocation = null;
+                this.userMarker = null;
+                this.locationWatchId = null;
+                this.geofenceEnabled = false;
+                this.geofenceRadius = 5;
+                this.geofenceCircle = null;
+                this.locationAccuracy = null;
+                this.init();
+            }
+
+            init() {
+                this.initMap();
+                this.bindEvents();
+                this.addSampleData();
+                this.startLocationUpdates();
+            }
+
+            initMap() {
+                this.map = L.map('map').setView([40.7128, -74.0060], 12);
+                
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors'
+                }).addTo(this.map);
+
+                // Add click event for emergency location selection
+                this.map.on('click', (e) => {
+                    document.getElementById('emergencyAddress').value = `${e.latlng.lat.toFixed(6)}, ${e.latlng.lng.toFixed(6)}`;
+                    this.reverseGeocode(e.latlng.lat, e.latlng.lng);
+                });
+            }
+
+            bindEvents() {
+                document.getElementById('ambulanceForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.addAmbulance();
+                });
+
+                document.getElementById('emergencyForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.dispatchEmergency();
+                });
+
+                document.getElementById('enableGPS').addEventListener('click', () => {
+                    this.toggleGPS();
+                });
+
+                document.getElementById('useCurrentLocation').addEventListener('click', () => {
+                    this.useCurrentLocationForEmergency();
+                });
+
+                document.getElementById('centerOnUser').addEventListener('click', () => {
+                    this.centerMapOnUser();
+                });
+
+                document.getElementById('toggleTracking').addEventListener('click', () => {
+                    this.toggleRealTimeTracking();
+                });
+
+                document.getElementById('showAllRoutes').addEventListener('click', () => {
+                    this.showAllRoutes();
+                });
+
+                document.getElementById('clearRoutes').addEventListener('click', () => {
+                    this.clearAllRoutes();
+                });
+
+                document.getElementById('findNearest').addEventListener('click', () => {
+                    this.findNearestAmbulanceToUser();
+                });
+
+                document.getElementById('toggleGeofence').addEventListener('click', () => {
+                    this.toggleGeofence();
+                });
+
+                document.getElementById('geofenceRadius').addEventListener('input', (e) => {
+                    this.geofenceRadius = parseFloat(e.target.value);
+                    document.getElementById('radiusValue').textContent = `${this.geofenceRadius} km`;
+                    this.updateGeofence();
+                });
+            }
+
+            async reverseGeocode(lat, lng) {
+                try {
+                    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`);
+                    const data = await response.json();
+                    
+                    if (data && data.display_name) {
+                        document.getElementById('address').textContent = data.display_name;
+                    }
+                } catch (error) {
+                    console.warn('Reverse geocoding failed:', error);
+                    document.getElementById('address').textContent = 'Address lookup failed';
+                }
+            }
+
+            showNotification(message, type = 'success') {
+                const notification = document.getElementById('notification');
+                notification.textContent = message;
+                notification.className = `notification ${type}`;
+                notification.classList.add('show');
+                
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 4000);
+            }
+
+            enableGPS() {
+                if (!navigator.geolocation) {
+                    this.showNotification('Geolocation is not supported by this browser', 'error');
+                    return;
+                }
+
+                this.updateGPSStatus('searching');
+                this.showNotification('Searching for GPS signal...', 'warning');
+
+                const options = {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                };
+
+                // Get initial position
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        this.handleLocationSuccess(position);
+                        this.startLocationWatch(options);
+                    },
+                    (error) => {
+                        this.handleLocationError(error);
+                    },
+                    options
+                );
+            }
+
+            startLocationWatch(options) {
+                if (this.locationWatchId) {
+                    navigator.geolocation.clearWatch(this.locationWatchId);
+                }
+
+                this.locationWatchId = navigator.geolocation.watchPosition(
+                    (position) => {
+                        this.handleLocationSuccess(position);
+                    },
+                    (error) => {
+                        this.handleLocationError(error);
+                    },
+                    options
+                );
+            }
+
+            handleLocationSuccess(position) {
+                const { latitude, longitude, accuracy, speed, heading } = position.coords;
+                
+                this.userLocation = {
+                    lat: latitude,
+                    lng: longitude,
+                    accuracy: accuracy,
+                    speed: speed || 0,
+                    heading: heading || 0,
+                    timestamp: new Date(position.timestamp)
+                };
+
+                this.locationAccuracy = accuracy;
+                this.updateGPSStatus('active');
+                this.updateLocationDisplay();
+                this.updateUserMarker();
+                this.checkGeofenceAlerts();
+
+                if (!this.gpsEnabled) {
+                    this.showNotification('GPS connected successfully!');
+                    this.map.setView([latitude, longitude], 15);
+                }
+
+                this.gpsEnabled = true;
+            }
+
+            handleLocationError(error) {
+                let message = 'GPS error: ';
+                switch (error.code) {
+                    case error.PERMISSION_DENIED:
+                        message += 'Location access denied by user';
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        message += 'Location information unavailable';
+                        break;
+                    case error.TIMEOUT:
+                        message += 'Location request timed out';
+                        break;
+                    default:
+                        message += 'Unknown GPS error';
+                        break;
+                }
+                
+                this.showNotification(message, 'error');
+                this.updateGPSStatus('error');
+            }
+
+            updateGPSStatus(status) {
+                const indicator = document.getElementById('gpsIndicator');
+                const statusText = document.getElementById('gpsStatus');
+                const btn = document.getElementById('enableGPS');
+
+                indicator.className = 'gps-indicator';
+                
+                switch (status) {
+                    case 'active':
+                        indicator.classList.add('active');
+                        statusText.textContent = 'GPS Connected';
+                        btn.textContent = '📡 GPS Active';
+                        btn.disabled = false;
+                        break;
+                    case 'searching':
+                        indicator.classList.add('searching');
+                        statusText.textContent = 'Searching GPS...';
+                        btn.textContent = '📡 Searching...';
+                        btn.disabled = true;
+                        break;
+                    case 'error':
+                        statusText.textContent = 'GPS Error';
+                        btn.textContent = '📡 Retry GPS';
+                        btn.disabled = false;
+                        this.gpsEnabled = false;
+                        break;
+                    default:
+                        statusText.textContent = 'GPS Disconnected';
+                        btn.textContent = '📡 Enable GPS Tracking';
+                        btn.disabled = false;
+                        this.gpsEnabled = false;
+                }
+            }
+
+            updateLocationDisplay() {
+                if (!this.userLocation) return;
+
+                const locationInfo = document.getElementById('locationInfo');
+                const coordinates = document.getElementById('coordinates');
+                const accuracyFill = document.getElementById('accuracyFill');
+                const accuracyText = document.getElementById('accuracyText');
+
+                locationInfo.style.display = 'block';
+                locationInfo.className = 'location-info';
+                
+                coordinates.textContent = `${this.userLocation.lat.toFixed(6)}, ${this.userLocation.lng.toFixed(6)}`;
+                
+                // Update accuracy indicator
+                const accuracy = this.userLocation.accuracy;
+                accuracyText.textContent = `±${Math.round(accuracy)}m`;
+                
+                let accuracyClass = 'accuracy-low';
+                let accuracyPercent = 20;
+                
+                if (accuracy <= 10) {
+                    accuracyClass = 'accuracy-high';
+                    accuracyPercent = 100;
+                } else if (accuracy <= 50) {
+                    accuracyClass = 'accuracy-medium';
+                    accuracyPercent = 60;
+                } else {
+                    accuracyPercent = Math.max(20, 100 - (accuracy / 2));
+                }
+                
+                accuracyFill.className = `accuracy-fill ${accuracyClass}`;
+                accuracyFill.style.width = `${accuracyPercent}%`;
+
+                // Reverse geocode for address
+                this.reverseGeocode(this.userLocation.lat, this.userLocation.lng);
+            }
+
+            updateUserMarker() {
+                if (!this.userLocation) return;
+
+                if (this.userMarker) {
+                    this.map.removeLayer(this.userMarker);
+                }
+
+                // Create custom user location icon
+                const userIcon = L.divIcon({
+                    className: 'user-location-marker',
+                    html: `<div style="
+                        width: 20px; 
+                        height: 20px; 
+                        background: #007bff; 
+                        border: 3px solid white; 
+                        border-radius: 50%; 
+                        box-shadow: 0 2px 10px rgba(0,123,255,0.5);
+                        animation: pulse-blue 2s infinite;
+                    "></div>
+                    <style>
+                        @keyframes pulse-blue {
+                            0% { box-shadow: 0 0 0 0 rgba(0,123,255,0.7); }
+                            70% { box-shadow: 0 0 0 10px rgba(0,123,255,0); }
+                            100% { box-shadow: 0 0 0 0 rgba(0,123,255,0); }
+                        }
+                    </style>`,
+                    iconSize: [20, 20],
+                    iconAnchor: [10, 10]
+                });
+
+                this.userMarker = L.marker([this.userLocation.lat, this.userLocation.lng], { icon: userIcon })
+                    .addTo(this.map)
+                    .bindPopup(`
+                        <div class="custom-popup">
+                            <h4>📍 Your Location</h4>
+                            <p><strong>Coordinates:</strong> ${this.userLocation.lat.toFixed(6)}, ${this.userLocation.lng.toFixed(6)}</p>
+                            <p><strong>Accuracy:</strong> ±${Math.round(this.userLocation.accuracy)}m</p>
+                            <p><strong>Speed:</strong> ${Math.round(this.userLocation.speed * 3.6)} km/h</p>
+                            <p><strong>Updated:</strong> ${this.userLocation.timestamp.toLocaleTimeString()}</p>
+                        </div>
+                    `);
+
+                // Add accuracy circle
+                if (this.accuracyCircle) {
+                    this.map.removeLayer(this.accuracyCircle);
+                }
+
+                this.accuracyCircle = L.circle([this.userLocation.lat, this.userLocation.lng], {
+                    radius: this.userLocation.accuracy,
+                    color: '#007bff',
+                    fillColor: '#007bff',
+                    fillOpacity: 0.1,
+                    weight: 1
+                }).addTo(this.map);
+            }
+
+            toggleGPS() {
+                if (!this.gpsEnabled) {
+                    this.enableGPS();
+                } else {
+                    this.disableGPS();
+                }
+            }
+
+            disableGPS() {
+                if (this.locationWatchId) {
+                    navigator.geolocation.clearWatch(this.locationWatchId);
+                    this.locationWatchId = null;
+                }
+
+                if (this.userMarker) {
+                    this.map.removeLayer(this.userMarker);
+                    this.userMarker = null;
+                }
+
+                if (this.accuracyCircle) {
+                    this.map.removeLayer(this.accuracyCircle);
+                    this.accuracyCircle = null;
+                }
+
+                this.updateGPSStatus('disconnected');
+                this.gpsEnabled = false;
+                this.userLocation = null;
+                document.getElementById('locationInfo').style.display = 'none';
+                this.showNotification('GPS tracking disabled');
+            }
+
+            useCurrentLocationForEmergency() {
+                if (!this.userLocation) {
+                    this.showNotification('GPS location not available. Enable GPS first.', 'error');
+                    return;
+                }
+
+                const addressField = document.getElementById('emergencyAddress');
+                addressField.value = `${this.userLocation.lat.toFixed(6)}, ${this.userLocation.lng.toFixed(6)}`;
+                this.showNotification('Current location set for emergency');
+            }
+
+            centerMapOnUser() {
+                if (!this.userLocation) {
+                    this.showNotification('GPS location not available', 'error');
+                    return;
+                }
+
+                this.map.setView([this.userLocation.lat, this.userLocation.lng], 16);
+                this.showNotification('Map centered on your location');
+            }
+
+            toggleGeofence() {
+                this.geofenceEnabled = !this.geofenceEnabled;
+                const btn = document.getElementById('toggleGeofence');
+                
+                if (this.geofenceEnabled) {
+                    btn.textContent = 'Disable Geofencing';
+                    btn.style.background = 'linear-gradient(135deg, #e74c3c, #c0392b)';
+                    this.updateGeofence();
+                    this.showNotification('Geofencing enabled');
+                } else {
+                    btn.textContent = 'Enable Geofencing';
+                    btn.style.background = 'linear-gradient(135deg, #667eea, #764ba2)';
+                    this.clearGeofence();
+                    this.showNotification('Geofencing disabled');
+                }
+            }
+
+            updateGeofence() {
+                if (!this.geofenceEnabled || !this.userLocation) return;
+
+                this.clearGeofence();
+
+                this.geofenceCircle = L.circle([this.userLocation.lat, this.userLocation.lng], {
+                    radius: this.geofenceRadius * 1000, // Convert km to meters
+                    color: '#ff6b6b',
+                    fillColor: '#ff6b6b',
+                    fillOpacity: 0.1,
+                    weight: 2,
+                    dashArray: '10, 10'
+                }).addTo(this.map);
+            }
+
+            clearGeofence() {
+                if (this.geofenceCircle) {
+                    this.map.removeLayer(this.geofenceCircle);
+                    this.geofenceCircle = null;
+                }
+            }
+
+            checkGeofenceAlerts() {
+                if (!this.geofenceEnabled || !this.userLocation) return;
+
+                this.ambulances.forEach(ambulance => {
+                    const distance = this.calculateDistance(
+                        this.userLocation.lat, this.userLocation.lng,
+                        ambulance.lat, ambulance.lng
+                    );
+
+                    if (distance <= this.geofenceRadius && ambulance.status === 'emergency') {
+                        this.showNotification(
+                            `⚠️ Emergency ambulance ${ambulance.id} is ${distance.toFixed(1)}km away!`, 
+                            'warning'
+                        );
+                    }
+                });
+            }
+
+            findNearestAmbulanceToUser() {
+                if (!this.userLocation) {
+                    this.showNotification('GPS location required', 'error');
+                    return;
+                }
+
+                const result = this.findNearestAmbulance(this.userLocation.lat, this.userLocation.lng);
+                
+                if (!result) {
+                    this.showNotification('No available ambulances found', 'warning');
+                    return;
+                }
+
+                // Highlight the nearest ambulance
+                const marker = this.markers[result.ambulance.id];
+                if (marker) {
+                    marker.openPopup();
+                    this.map.setView([result.ambulance.lat, result.ambulance.lng], 14);
+                }
+
+                this.showNotification(
+                    `Nearest ambulance: ${result.ambulance.id} (${result.distance.toFixed(1)}km away)`
+                );
+            }
+
+            toggleRealTimeTracking() {
+                const btn = document.getElementById('toggleTracking');
+                
+                if (this.trackingInterval) {
+                    clearInterval(this.trackingInterval);
+                    this.trackingInterval = null;
+                    btn.classList.remove('active');
+                    btn.textContent = '📍 Start Tracking';
+                    this.showNotification('Real-time tracking stopped');
+                } else {
+                    this.startRealTimeTracking();
+                    btn.classList.add('active');
+                    btn.textContent = '⏹️ Stop Tracking';
+                    this.showNotification('Real-time tracking started');
+                }
+            }
+
+            startRealTimeTracking() {
+                this.trackingInterval = setInterval(() => {
+                    // Simulate ambulance movement
+                    this.ambulances.forEach(ambulance => {
+                        if (ambulance.status === 'emergency' || ambulance.status === 'busy') {
+                            // Simulate GPS movement
+                            ambulance.lat += (Math.random() - 0.5) * 0.001;
+                            ambulance.lng += (Math.random() - 0.5) * 0.001;
+                            ambulance.speed = Math.floor(Math.random() * 60) + 20;
+                            ambulance.heading = (ambulance.heading + (Math.random() - 0.5) * 30) % 360;
+                            ambulance.lastUpdate = new Date();
+
+                            // Update marker position
+                            const marker = this.markers[ambulance.id];
+                            if (marker) {
+                                marker.setLatLng([ambulance.lat, ambulance.lng]);
+                                marker.setPopupContent(`
+                                    <div class="custom-popup">
+                                        <h4>🚑 ${ambulance.id}</h4>
+                                        <p><strong>Driver:</strong> ${ambulance.driver}</p>
+                                        <p><strong>Status:</strong> ${ambulance.status}</p>
+                                        <p><strong>Speed:</strong> ${ambulance.speed} km/h</p>
+                                        <p><strong>Heading:</strong> ${Math.round(ambulance.heading)}°</p>
+                                        <p><strong>Last Update:</strong> ${ambulance.lastUpdate.toLocaleTimeString()}</p>
+                                    </div>
+                                `);
+                            }
+                        }
+                    });
+
+                    // Update geofence if enabled
+                    if (this.geofenceEnabled) {
+                        this.updateGeofence();
+                        this.checkGeofenceAlerts();
+                    }
+                }, 5000); // Update every 5 seconds
+            }
+
+            addSampleData() {
+                // Add sample ambulances around the map
+                const sampleAmbulances = [
+                    { id: 'PPC-001', driver: 'Jeffery D', status: 'available', lat: 12.9390981, lng: 77.7312595 },
+                    { id: 'PPC-002', driver: 'Rama nathan', status: 'available', lat: 12.9560562, lng: 77.7274125 },
+                    { id: 'PPC-003', driver: 'Satya Nandan', status: 'emergency', lat: 12.9506852, lng: 77.7148450 },
+                    { id: 'PPC-004', driver: 'Chinnaswamy', status: 'available', lat: 12.9463835, lng: 77.7206808 },
+                    { id: 'PPC-005', driver: 'Jeffery D', status: 'available', lat: 12.9390981, lng: 77.7312595 },
+                    { id: 'PPC-006', driver: 'Rama nathan', status: 'available', lat: 12.9560562, lng: 77.7274125 }
+                ];
+
+                sampleAmbulances.forEach(amb => {
+                    const ambulance = {
+                        ...amb,
+                        lastUpdate: new Date(),
+                        speed: Math.floor(Math.random() * 60) + 10,
+                        heading: Math.floor(Math.random() * 360),
+                        eta: null,
+                        currentRoute: null
+                    };
+                    
+                    this.ambulances.push(ambulance);
+                    this.addMarker(ambulance);
+                });
+
+                this.updateStats();
+                this.renderAmbulanceList();
+            }
+
+            // Rest of the existing methods...
+            calculateDistance(lat1, lng1, lat2, lng2) {
+                const R = 6371; // Earth's radius in km
+                const dLat = (lat2 - lat1) * Math.PI / 180;
+                const dLng = (lng2 - lng1) * Math.PI / 180;
+                const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                    Math.sin(dLng/2) * Math.sin(dLng/2);
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+                return R * c;
+            }
+
+            findNearestAmbulance(targetLat, targetLng) {
+                const availableAmbulances = this.ambulances.filter(amb => amb.status === 'available');
+                
+                if (availableAmbulances.length === 0) {
+                    return null;
+                }
+
+                let nearest = availableAmbulances[0];
+                let minDistance = this.calculateDistance(targetLat, targetLng, nearest.lat, nearest.lng);
+
+                availableAmbulances.forEach(ambulance => {
+                    const distance = this.calculateDistance(targetLat, targetLng, ambulance.lat, ambulance.lng);
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        nearest = ambulance;
+                    }
+                });
+
+                return { ambulance: nearest, distance: minDistance };
+            }
+
+            addAmbulance() {
+                const id = document.getElementById('ambulanceId').value;
+                const driver = document.getElementById('driverName').value;
+                const status = document.getElementById('status').value;
+
+                if (this.ambulances.find(amb => amb.id === id)) {
+                    this.showNotification('Ambulance ID already exists!', 'error');
+                    return;
+                }
+
+                const ambulance = {
+                    id: id,
+                    driver: driver,
+                    status: status,
+                    lat: this.userLocation ? this.userLocation.lat + (Math.random() - 0.5) * 0.05 : 40.7128 + (Math.random() - 0.5) * 0.1,
+                    lng: this.userLocation ? this.userLocation.lng + (Math.random() - 0.5) * 0.05 : -74.0060 + (Math.random() - 0.5) * 0.1,
+                    lastUpdate: new Date(),
+                    speed: Math.floor(Math.random() * 60) + 10,
+                    heading: Math.floor(Math.random() * 360),
+                    eta: null,
+                    currentRoute: null
+                };
+
+                this.ambulances.push(ambulance);
+                this.addMarker(ambulance);
+                this.updateStats();
+                this.renderAmbulanceList();
+                this.clearForm();
+                this.showNotification(`Ambulance ${id} added successfully`);
+            }
+
+            addMarker(ambulance) {
+                const icon = this.getStatusIcon(ambulance.status);
+                
+                const marker = L.marker([ambulance.lat, ambulance.lng], { icon })
+                    .addTo(this.map)
+                    .bindPopup(`
+                        <div class="custom-popup">
+                            <h4>🚑 ${ambulance.id}</h4>
+                            <p><strong>Driver:</strong> ${ambulance.driver}</p>
+                            <p><strong>Status:</strong> ${ambulance.status}</p>
+                            <p><strong>Speed:</strong> ${ambulance.speed} km/h</p>
+                            <p><strong>Heading:</strong> ${ambulance.heading}°</p>
+                            ${ambulance.eta ? `<p><strong>ETA:</strong> ${ambulance.eta}</p>` : ''}
+                            <p><strong>Last Update:</strong> ${ambulance.lastUpdate.toLocaleTimeString()}</p>
+                        </div>
+                    `);
+
+                this.markers[ambulance.id] = marker;
+            }
+
+            getStatusIcon(status) {
+                const iconColors = {
+                    available: '#4CAF50',
+                    busy: '#ff9f43',
+                    emergency: '#ff6b6b',
+                    maintenance: '#95a5a6'
+                };
+
+                return L.divIcon({
+                    className: 'custom-marker',
+                    html: `<div style="background-color: ${iconColors[status]}; width: 24px; height: 24px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3); position: relative;">
+                        <div style="position: absolute; top: -2px; right: -2px; width: 8px; height: 8px; background: white; border-radius: 50%; display: ${status === 'emergency' ? 'block' : 'none'}"></div>
+                    </div>`,
+                    iconSize: [24, 24],
+                    iconAnchor: [12, 12]
+                });
+            }
+
+            dispatchEmergency() {
+                const address = document.getElementById('emergencyAddress').value;
+                const type = document.getElementById('emergencyType').value;
+                const notes = document.getElementById('emergencyNotes').value;
+
+                let emergencyLocation;
+                if (address.includes(',')) {
+                    const coords = address.split(',');
+                    if (coords.length === 2) {
+                        emergencyLocation = {
+                            lat: parseFloat(coords[0].trim()),
+                            lng: parseFloat(coords[1].trim())
+                        };
+                    }
+                } else {
+                    emergencyLocation = {
+                        lat: 40.7128 + (Math.random() - 0.5) * 0.05,
+                        lng: -74.0060 + (Math.random() - 0.5) * 0.05
+                    };
+                }
+
+                const nearestResult = this.findNearestAmbulance(emergencyLocation.lat, emergencyLocation.lng);
+                
+                if (!nearestResult) {
+                    this.showNotification('No available ambulances found!', 'error');
+                    return;
+                }
+
+                // Dispatch the ambulance
+                nearestResult.ambulance.status = 'emergency';
+                const marker = this.markers[nearestResult.ambulance.id];
+                if (marker) {
+                    marker.setIcon(this.getStatusIcon('emergency'));
+                }
+
+                this.createRoute(nearestResult.ambulance.id, emergencyLocation);
+                this.updateStats();
+                this.renderAmbulanceList();
+                this.clearEmergencyForm();
+                
+                this.showNotification(`Emergency dispatched! Ambulance ${nearestResult.ambulance.id} is en route (${nearestResult.distance.toFixed(1)}km away)`);
+            }
+
+            createRoute(ambulanceId, destination) {
+                const ambulance = this.ambulances.find(amb => amb.id === ambulanceId);
+                if (!ambulance) return;
+
+                const routingControl = L.Routing.control({
+                    waypoints: [
+                        L.latLng(ambulance.lat, ambulance.lng),
+                        L.latLng(destination.lat, destination.lng)
+                    ],
+                    routeWhileDragging: false,
+                    addWaypoints: false,
+                    createMarker: function() { return null; },
+                    lineOptions: {
+                        styles: [{ color: '#e74c3c', weight: 4, opacity: 0.8 }]
+                    }
+                }).on('routesfound', (e) => {
+                    const route = e.routes[0];
+                    const distance = (route.summary.totalDistance / 1000).toFixed(1);
+                    const time = Math.round(route.summary.totalTime / 60);
+                    
+                    ambulance.eta = `${time} min (${distance} km)`;
+                    ambulance.currentRoute = route;
+                    
+                    this.updateRouteInfo(ambulanceId, distance, time);
+                    this.renderAmbulanceList();
+                }).addTo(this.map);
+
+                this.routes[ambulanceId] = routingControl;
+            }
+
+            updateRouteInfo(ambulanceId, distance, time) {
+                const panel = document.getElementById('routeInfoPanel');
+                const details = document.getElementById('routeDetails');
+                
+                panel.style.display = 'block';
+                details.innerHTML = `
+                    <h4>Route to Emergency</h4>
+                    <p><strong>Ambulance:</strong> ${ambulanceId}</p>
+                    <p><strong>Distance:</strong> ${distance} km</p>
+                    <p><strong>Estimated Time:</strong> ${time} minutes</p>
+                    <p><strong>Status:</strong> En route</p>
+                `;
+            }
+
+            showAllRoutes() {
+                // Implementation for showing all routes
+                this.showNotification('Showing all active routes');
+            }
+
+            clearAllRoutes() {
+                Object.values(this.routes).forEach(route => {
+                    this.map.removeControl(route);
+                });
+                this.routes = {};
+                document.getElementById('routeInfoPanel').style.display = 'none';
+                this.showNotification('All routes cleared');
+            }
+
+            updateStats() {
+                const stats = this.ambulances.reduce((acc, amb) => {
+                    acc[amb.status] = (acc[amb.status] || 0) + 1;
+                    return acc;
+                }, {});
+
+                document.getElementById('availableCount').textContent = stats.available || 0;
+                document.getElementById('busyCount').textContent = stats.busy || 0;
+                document.getElementById('emergencyCount').textContent = stats.emergency || 0;
+                document.getElementById('totalCount').textContent = this.ambulances.length;
+            }
+
+            renderAmbulanceList() {
+                const container = document.getElementById('ambulanceList');
+                container.innerHTML = this.ambulances.map(ambulance => `
+                    <div class="ambulance-item ${ambulance.status === 'emergency' ? 'emergency' : ''}">
+                        <div class="ambulance-info">
+                            <h4>${ambulance.id}</h4>
+                            <p>Driver: ${ambulance.driver}</p>
+                            <p>Speed: ${ambulance.speed} km/h | Updated: ${ambulance.lastUpdate.toLocaleTimeString()}</p>
+                            ${ambulance.eta ? `<p>ETA: ${ambulance.eta}</p>` : ''}
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span class="status-badge status-${ambulance.status}">${ambulance.status}</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            clearForm() {
+                document.getElementById('ambulanceForm').reset();
+            }
+
+            clearEmergencyForm() {
+                document.getElementById('emergencyForm').reset();
+            }
+
+            startLocationUpdates() {
+                // Initialize GPS on load
+                setTimeout(() => {
+                    if (navigator.geolocation) {
+                        this.enableGPS();
+                    }
+                }, 1000);
+            }
+        }
+
+        // Initialize the tracking system
+        const tracker = new AdvancedAmbulanceTracker();
+    </script>
+</body>
+</html>

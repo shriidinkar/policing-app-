@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Q&A System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .navbar {
+            background: white;
+            padding: 20px 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+        }
+
+        .navbar h1 {
+            font-size: 1.6em;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .menu-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 6px;
+            transition: background 0.3s;
+        }
+
+        .menu-button:hover {
+            background: #f0f0f0;
+        }
+
+        .menu-icon {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+        }
+
+        .menu-icon span {
+            width: 4px;
+            height: 4px;
+            background: #2c3e50;
+            border-radius: 50%;
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 70px;
+            right: 30px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            display: none;
+            min-width: 200px;
+            z-index: 1000;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .dropdown-menu.show {
+            display: block;
+        }
+
+        .dropdown-item {
+            padding: 15px 20px;
+            cursor: pointer;
+            transition: background 0.2s;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .dropdown-item:last-child {
+            border-bottom: none;
+        }
+
+        .dropdown-item:hover {
+            background: #f8f9fa;
+        }
+
+        .dropdown-item.active {
+            background: #e3f2fd;
+            color: #1976d2;
+            font-weight: 600;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .main-view {
+            display: none;
+        }
+
+        .main-view.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section {
+            background: white;
+            padding: 35px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 25px;
+        }
+
+        .section h2 {
+            font-size: 1.5em;
+            margin-bottom: 25px;
+            color: #2c3e50;
+        }
+
+        .upload-area {
+            border: 2px dashed #cbd5e0;
+            border-radius: 10px;
+            padding: 50px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #f8f9fa;
+        }
+
+        .upload-area:hover {
+            border-color: #3498db;
+            background: #f0f7ff;
+        }
+
+        .upload-area.dragover {
+            border-color: #3498db;
+            background: #e3f2fd;
+        }
+
+        .upload-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .btn {
+            padding: 12px 28px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+
+        .btn:hover {
+            background: #2980b9;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3);
+        }
+
+        .btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        .document-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .doc-card {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .doc-card:hover {
+            border-color: #3498db;
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .doc-card.selected {
+            border-color: #3498db;
+            background: #e3f2fd;
+        }
+
+        .doc-icon {
+            font-size: 2.5em;
+            margin-bottom: 12px;
+        }
+
+        .doc-name {
+            font-weight: 600;
+            color: #2c3e50;
+            word-break: break-word;
+            margin-bottom: 15px;
+        }
+
+        .doc-delete {
+            width: 100%;
+            padding: 8px;
+            font-size: 0.9em;
+        }
+
+        .input-group {
+            margin-bottom: 25px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 0.95em;
+        }
+
+        .input-group input,
+        .input-group textarea {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            font-family: inherit;
+            transition: border-color 0.3s;
+            background: #fafafa;
+        }
+
+        .input-group select {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            font-family: inherit;
+            transition: border-color 0.3s;
+            background: #fafafa;
+            cursor: pointer;
+        }
+
+        .input-group input:focus,
+        .input-group textarea:focus,
+        .input-group select:focus {
+            outline: none;
+            border-color: #3498db;
+            background: white;
+        }
+
+        .input-group textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .selected-doc-badge {
+            display: inline-block;
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        select option {
+            padding: 10px;
+        }
+
+        .answer-container {
+            margin-top: 35px;
+        }
+
+        .answer-block {
+            background: #e8f5e9;
+            padding: 25px;
+            border-radius: 10px;
+            border-left: 4px solid #4caf50;
+            margin-bottom: 25px;
+        }
+
+        .answer-block h3 {
+            color: #2e7d32;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .answer-text {
+            line-height: 1.8;
+            color: #1b5e20;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .context-container {
+            background: #fff8e1;
+            padding: 25px;
+            border-radius: 10px;
+            border-left: 4px solid #ffc107;
+        }
+
+        .context-container h3 {
+            color: #f57c00;
+            margin-bottom: 18px;
+            font-size: 1.2em;
+        }
+
+        .context-box {
+            background: white;
+            padding: 18px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .context-meta {
+            font-size: 0.85em;
+            color: #f57c00;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .context-text {
+            line-height: 1.7;
+            color: #555;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            animation: slideIn 0.3s;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border-left: 4px solid #17a2b8;
+        }
+
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 30px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 4em;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        .empty-state p {
+            font-size: 1.1em;
+        }
+
+        .file-selected {
+            background: #e8f5e9;
+            padding: 12px 18px;
+            border-radius: 6px;
+            margin-top: 15px;
+            display: inline-block;
+            color: #2e7d32;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <h1>📚 Document Q&A System</h1>
+        <button class="menu-button" onclick="toggleMenu()">
+            <div class="menu-icon">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </button>
+        <div class="dropdown-menu" id="dropdownMenu">
+            <div class="dropdown-item active" onclick="switchView('qa')">
+                <span>❓</span>
+                <span>Ask Questions</span>
+            </div>
+            <div class="dropdown-item" onclick="switchView('upload')">
+                <span>📤</span>
+                <span>Upload Documents</span>
+            </div>
+            <div class="dropdown-item" onclick="switchView('manage')">
+                <span>📋</span>
+                <span>Manage Documents</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Q&A View (Primary) -->
+        <div id="qa-view" class="main-view active">
+            <div class="section">
+                <h2>Ask Questions</h2>
+                
+                <div id="qaAlert"></div>
+
+                <div class="input-group">
+                    <label>Select Document:</label>
+                    <select id="documentSelect" onchange="selectDocumentFromDropdown()">
+                        <option value="">-- Choose a document --</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label>Your Question:</label>
+                    <textarea id="questionInput" placeholder="Enter your question here..." disabled></textarea>
+                </div>
+
+                <button class="btn" id="askBtn" onclick="askQuestion()" disabled>
+                    Get Answer
+                </button>
+
+                <div id="answerContainer" class="answer-container"></div>
+            </div>
+        </div>
+
+        <!-- Upload View -->
+        <div id="upload-view" class="main-view">
+            <div class="section">
+                <h2>Upload New Document</h2>
+                
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">📄</div>
+                    <h3 style="margin-bottom: 10px;">Drag & Drop Your File Here</h3>
+                    <p style="color: #999; margin-bottom: 20px;">or</p>
+                    <button class="btn" onclick="document.getElementById('fileInput').click()">
+                        Browse Files
+                    </button>
+                    <p style="color: #999; font-size: 0.9em; margin-top: 20px;">
+                        Supported formats: PDF, TXT, DOCX
+                    </p>
+                </div>
+                
+                <input type="file" id="fileInput" accept=".pdf,.txt,.docx">
+                
+                <div id="fileSelected"></div>
+                <div id="uploadAlert"></div>
+            </div>
+        </div>
+
+        <!-- Manage View -->
+        <div id="manage-view" class="main-view">
+            <div class="section">
+                <h2>Your Documents</h2>
+                <p style="color: #666; margin-bottom: 25px;">Select a document to use for Q&A, or delete documents you no longer need</p>
+                
+                <div id="documentGrid" class="document-grid">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📄</div>
+                        <p>No documents uploaded yet</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:5000/api';
+        let selectedFile = null;
+        let selectedDocument = null;
+        let selectedDocumentName = '';
+
+        function toggleMenu() {
+            const menu = document.getElementById('dropdownMenu');
+            menu.classList.toggle('show');
+        }
+
+        // Close menu when clicking outside
+        document.addEventListener('click', (e) => {
+            const menu = document.getElementById('dropdownMenu');
+            const menuButton = document.querySelector('.menu-button');
+            if (!menu.contains(e.target) && !menuButton.contains(e.target)) {
+                menu.classList.remove('show');
+            }
+        });
+
+        function switchView(viewName) {
+            // Update dropdown items
+            document.querySelectorAll('.dropdown-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.target.closest('.dropdown-item').classList.add('active');
+
+            // Switch views
+            document.querySelectorAll('.main-view').forEach(view => {
+                view.classList.remove('active');
+            });
+            document.getElementById(`${viewName}-view`).classList.add('active');
+
+            // Close menu
+            document.getElementById('dropdownMenu').classList.remove('show');
+
+            // Load documents when switching to manage view OR qa view
+            if (viewName === 'manage' || viewName === 'qa') {
+                loadDocuments();
+                if (viewName === 'qa') {
+                    populateDocumentDropdown();
+                }
+            }
+        }
+
+        // Drag and drop functionality
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file) {
+                selectedFile = file;
+                showFileSelected(file.name);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                selectedFile = file;
+                showFileSelected(file.name);
+            }
+        });
+
+        function showFileSelected(filename) {
+            const fileSelectedDiv = document.getElementById('fileSelected');
+            fileSelectedDiv.innerHTML = `
+                <div class="file-selected">
+                    📎 ${filename}
+                    <button class="btn" onclick="uploadDocument()" style="margin-left: 15px;">
+                        Upload Now
+                    </button>
+                </div>
+            `;
+        }
+
+        async function uploadDocument() {
+            if (!selectedFile) return;
+
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+
+            const alertDiv = document.getElementById('uploadAlert');
+            alertDiv.innerHTML = '<div class="alert alert-info">Uploading document... <div class="loading-spinner"></div></div>';
+
+            try {
+                const response = await fetch(`${API_URL}/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alertDiv.innerHTML = `<div class="alert alert-success">✓ ${data.message}</div>`;
+                    fileInput.value = '';
+                    selectedFile = null;
+                    document.getElementById('fileSelected').innerHTML = '';
+                    setTimeout(() => alertDiv.innerHTML = '', 3000);
+                } else {
+                    alertDiv.innerHTML = `<div class="alert alert-error">✗ ${data.error}</div>`;
+                }
+            } catch (error) {
+                alertDiv.innerHTML = `<div class="alert alert-error">✗ Upload failed: ${error.message}</div>`;
+            }
+        }
+
+        async function loadDocuments() {
+            try {
+                const response = await fetch(`${API_URL}/documents`);
+                const data = await response.json();
+
+                const gridDiv = document.getElementById('documentGrid');
+
+                if (data.documents.length === 0) {
+                    gridDiv.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📄</div>
+                            <p>No documents uploaded yet</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                gridDiv.innerHTML = data.documents.map(doc => `
+                    <div class="doc-card ${selectedDocument === doc.collection_name ? 'selected' : ''}" 
+                         onclick="selectDocumentForQA('${doc.collection_name}', '${doc.filename}')">
+                        <div class="doc-icon">📄</div>
+                        <div class="doc-name">${doc.filename}</div>
+                        <button class="btn btn-danger doc-delete" 
+                                onclick="event.stopPropagation(); deleteDocument('${doc.collection_name}')">
+                            Delete
+                        </button>
+                    </div>
+                `).join('');
+
+                // Also populate dropdown if we're on QA view
+                populateDocumentDropdown();
+            } catch (error) {
+                console.error('Failed to load documents:', error);
+            }
+        }
+
+        async function populateDocumentDropdown() {
+            try {
+                const response = await fetch(`${API_URL}/documents`);
+                const data = await response.json();
+
+                const selectElement = document.getElementById('documentSelect');
+                
+                // Clear existing options except the first one
+                selectElement.innerHTML = '<option value="">-- Choose a document --</option>';
+
+                if (data.documents.length === 0) {
+                    selectElement.innerHTML = '<option value="">No documents available</option>';
+                    selectElement.disabled = true;
+                    return;
+                }
+
+                // Add all documents to dropdown
+                data.documents.forEach(doc => {
+                    const option = document.createElement('option');
+                    option.value = doc.collection_name;
+                    option.textContent = doc.filename;
+                    if (selectedDocument === doc.collection_name) {
+                        option.selected = true;
+                    }
+                    selectElement.appendChild(option);
+                });
+
+                selectElement.disabled = false;
+            } catch (error) {
+                console.error('Failed to populate dropdown:', error);
+            }
+        }
+
+        function selectDocumentFromDropdown() {
+            const selectElement = document.getElementById('documentSelect');
+            const collectionName = selectElement.value;
+            
+            if (!collectionName) {
+                selectedDocument = null;
+                selectedDocumentName = '';
+                document.getElementById('questionInput').disabled = true;
+                document.getElementById('askBtn').disabled = true;
+                document.getElementById('answerContainer').innerHTML = '';
+                document.getElementById('qaAlert').innerHTML = '';
+                return;
+            }
+
+            const filename = selectElement.options[selectElement.selectedIndex].text;
+            
+            selectedDocument = collectionName;
+            selectedDocumentName = filename;
+            
+            document.getElementById('questionInput').disabled = false;
+            document.getElementById('askBtn').disabled = false;
+            
+            document.getElementById('qaAlert').innerHTML = 
+                `<div class="alert alert-success">✓ Document "${filename}" selected. You can now ask questions!</div>`;
+            
+            setTimeout(() => {
+                document.getElementById('qaAlert').innerHTML = '';
+            }, 3000);
+        }
+
+        function selectDocumentForQA(collectionName, filename) {
+            selectedDocument = collectionName;
+            selectedDocumentName = filename;
+            
+            document.getElementById('questionInput').disabled = false;
+            document.getElementById('askBtn').disabled = false;
+            
+            // Update dropdown selection
+            const selectElement = document.getElementById('documentSelect');
+            selectElement.value = collectionName;
+            
+            document.getElementById('qaAlert').innerHTML = 
+                `<div class="alert alert-success">✓ Document "${filename}" selected. You can now ask questions!</div>`;
+            
+            setTimeout(() => {
+                document.getElementById('qaAlert').innerHTML = '';
+            }, 3000);
+
+            loadDocuments();
+        }
+
+        async function deleteDocument(collectionName) {
+            if (!confirm('Are you sure you want to delete this document?')) return;
+
+            try {
+                const response = await fetch(`${API_URL}/documents/${collectionName}`, {
+                    method: 'DELETE'
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    if (selectedDocument === collectionName) {
+                        selectedDocument = null;
+                        selectedDocumentName = '';
+                        document.getElementById('questionInput').disabled = true;
+                        document.getElementById('askBtn').disabled = true;
+                        document.getElementById('answerContainer').innerHTML = '';
+                        
+                        // Reset dropdown
+                        const selectElement = document.getElementById('documentSelect');
+                        if (selectElement) {
+                            selectElement.value = '';
+                        }
+                    }
+                    loadDocuments();
+                }
+            } catch (error) {
+                alert('Failed to delete document');
+            }
+        }
+
+        async function askQuestion() {
+            const question = document.getElementById('questionInput').value.trim();
+            if (!question || !selectedDocument) return;
+
+            const answerContainer = document.getElementById('answerContainer');
+            answerContainer.innerHTML = '<div class="loading-spinner"></div>';
+            document.getElementById('askBtn').disabled = true;
+
+            try {
+                const response = await fetch(`${API_URL}/ask`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        question: question,
+                        collection_name: selectedDocument,
+                        model: 'llama3.2',
+                        top_k: 3
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.error) {
+                    answerContainer.innerHTML = `<div class="alert alert-error">✗ ${data.error}</div>`;
+                    document.getElementById('askBtn').disabled = false;
+                    return;
+                }
+
+                // Helper function to format text with line breaks
+                function formatText(text) {
+                    // Just replace newlines with spaces for better readability
+                    return text.replace(/\n+/g, ' ');
+                }
+
+                let html = `
+                    <div class="answer-block">
+                        <h3>💡 Answer</h3>
+                        <div class="answer-text">${data.answer}</div>
+                    </div>
+                    <div class="context-container">
+                        <h3>📄 Source Contexts</h3>
+                `;
+
+                data.contexts.forEach((ctx, i) => {
+                    html += `
+                        <div class="context-box">
+                            <div class="context-meta">Context ${i + 1} • Relevance: ${(ctx.score * 100).toFixed(1)}%</div>
+                            <div class="context-text">${formatText(ctx.text)}</div>
+                        </div>
+                    `;
+                });
+
+                html += '</div>';
+                answerContainer.innerHTML = html;
+                document.getElementById('askBtn').disabled = false;
+
+            } catch (error) {
+                answerContainer.innerHTML = `<div class="alert alert-error">✗ Failed to get answer: ${error.message}</div>`;
+                document.getElementById('askBtn').disabled = false;
+            }
+        }
+
+        // Enter key to submit question
+        document.getElementById('questionInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                askQuestion();
+            }
+        });
+
+        // Load documents on page load
+        loadDocuments();
+        populateDocumentDropdown();
+    </script>
+</body>
+</html>

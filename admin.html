@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Karnataka State Police</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1c3c52 0%, #0b1f2a 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .badge-section {
+            font-size: 0.9em;
+            color: #1c3c52;
+            font-weight: bold;
+        }
+
+        .logout-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        .logout-btn:hover {
+            background: #c82333;
+        }
+
+        h1 {
+            color: #1c3c52;
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .admin-info {
+            display: flex;
+            gap: 20px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .info-item {
+            background: #f0f4f8;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-card h3 {
+            color: #1c3c52;
+            margin-bottom: 15px;
+            font-size: 1em;
+        }
+
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #1c3c52;
+            margin-bottom: 5px;
+        }
+
+        .officer-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .officer-card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .officer-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
+        }
+
+        .officer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e0e7ef;
+        }
+
+        .officer-name {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #1c3c52;
+        }
+
+        .officer-id {
+            font-size: 0.9em;
+            color: #6c757d;
+            font-weight: 600;
+        }
+
+        .officer-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .mini-stat {
+            background: #f0f4f8;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .mini-stat-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #1c3c52;
+        }
+
+        .mini-stat-label {
+            font-size: 0.85em;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+
+        .details-section {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .details-section.active {
+            display: block;
+        }
+
+        .back-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .back-btn:hover {
+            background: #5a6268;
+        }
+
+        .detail-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .detail-tab {
+            background: #e0e7ef;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95em;
+            font-weight: 600;
+            transition: all 0.3s;
+            color: #1c3c52;
+        }
+
+        .detail-tab:hover {
+            background: #d0d7df;
+        }
+
+        .detail-tab.active {
+            background: #1c3c52;
+            color: white;
+        }
+
+        .detail-content {
+            display: none;
+        }
+
+        .detail-content.active {
+            display: block;
+        }
+
+        .item-list {
+            list-style: none;
+        }
+
+        .item {
+            background: #f8f9fa;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 4px solid #1c3c52;
+        }
+
+        .item strong {
+            color: #1c3c52;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+            font-style: italic;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-top: 5px;
+        }
+
+        .status-active {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-pending {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .status-completed {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: white;
+            font-size: 1.2em;
+        }
+
+        .export-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .export-btn:hover {
+            background: #218838;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-top">
+                <div class="badge-section">KARNATAKA STATE POLICE - ADMIN DASHBOARD</div>
+                <div>
+                    <button class="export-btn" onclick="exportAllData()">📊 Export All Data</button>
+                    <button class="logout-btn" onclick="logout()">Logout</button>
+                </div>
+            </div>
+            <h1>👮 Supervisory Overview</h1>
+            <div class="admin-info">
+                <div class="info-item">Admin Access Level: <strong>Supervisor</strong></div>
+                <div class="info-item">Last Updated: <span id="lastUpdated">-</span></div>
+            </div>
+        </header>
+
+        <!-- Overview Stats -->
+        <div id="overviewSection">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>Total Officers</h3>
+                    <div class="stat-value" id="totalOfficers">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Total Active Cases</h3>
+                    <div class="stat-value" id="totalCases">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Training Completion</h3>
+                    <div class="stat-value" id="avgTraining">0%</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Total Patrol Hours</h3>
+                    <div class="stat-value" id="totalPatrolHours">0</div>
+                </div>
+            </div>
+
+            <h2 style="color: white; margin-bottom: 20px;">Officer Details</h2>
+            <div class="officer-cards" id="officerCards">
+                <div class="loading">Loading officer data...</div>
+            </div>
+        </div>
+
+        <!-- Officer Details View -->
+        <div id="detailsSection" class="details-section">
+            <button class="back-btn" onclick="showOverview()">← Back to Overview</button>
+            <h2 style="color: #1c3c52; margin-bottom: 20px;" id="detailOfficerName">Officer Details</h2>
+            
+            <div class="detail-tabs">
+                <button class="detail-tab active" onclick="showDetailTab('cases')">Cases</button>
+                <button class="detail-tab" onclick="showDetailTab('training')">Training</button>
+                <button class="detail-tab" onclick="showDetailTab('performance')">Performance</button>
+                <button class="detail-tab" onclick="showDetailTab('patrol')">Patrol Logs</button>
+            </div>
+
+            <div id="detailCases" class="detail-content active">
+                <h3 style="color: #1c3c52; margin-bottom: 15px;">Cases</h3>
+                <ul class="item-list" id="detailCasesList">
+                    <li class="empty-state">No cases found</li>
+                </ul>
+            </div>
+
+            <div id="detailTraining" class="detail-content">
+                <h3 style="color: #1c3c52; margin-bottom: 15px;">Training Modules</h3>
+                <ul class="item-list" id="detailTrainingList">
+                    <li class="empty-state">No training modules found</li>
+                </ul>
+            </div>
+
+            <div id="detailPerformance" class="detail-content">
+                <h3 style="color: #1c3c52; margin-bottom: 15px;">Performance Metrics</h3>
+                <ul class="item-list" id="detailPerformanceList">
+                    <li class="empty-state">No performance metrics found</li>
+                </ul>
+            </div>
+
+            <div id="detailPatrol" class="detail-content">
+                <h3 style="color: #1c3c52; margin-bottom: 15px;">Patrol Logs</h3>
+                <ul class="item-list" id="detailPatrolList">
+                    <li class="empty-state">No patrol logs found</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- FIREBASE INTEGRATION -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, collection, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBbtWF3B84xnA6HseclVNZ4YReg4ImzrTs",
+            authDomain: "k-policingapp.firebaseapp.com",
+            projectId: "k-policingapp",
+            storageBucket: "k-policingapp.firebasestorage.app",
+            messagingSenderId: "895651987778",
+            appId: "1:895651987778:web:3ef88e917b08f4d9edc8db",
+            measurementId: "G-T58V06PJ0E"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        window.db = db;
+        window.firebaseImports = { collection, getDocs };
+    </script>
+
+    <script>
+        const officerData = {
+            "1CR24AI031": { name: "Officer Chandu", rank: "Sub-Inspector", unit: "Bengaluru City" },
+            "1CR24CI056": { name: "Officer Shriya", rank: "Super-Intended", unit: "Bengaluru Rural" },
+            "1CR24CI065": { name: "Officer Varu", rank: "Head Constable", unit: "Mysuru" }
+        };
+
+        let allOfficersData = {};
+        let currentViewOfficer = null;
+
+        async function loadAllOfficersData() {
+            const { collection, getDocs } = window.firebaseImports;
+            
+            for (let officerId in officerData) {
+                allOfficersData[officerId] = {
+                    info: officerData[officerId],
+                    cases: [],
+                    training: [],
+                    performance: [],
+                    patrols: []
+                };
+
+                try {
+                    // Load cases
+                    const casesSnap = await getDocs(collection(window.db, 'cases'));
+                    casesSnap.forEach((doc) => {
+                        if (doc.id === officerId) {
+                            allOfficersData[officerId].cases = doc.data().data || [];
+                        }
+                    });
+
+                    // Load training
+                    const trainingSnap = await getDocs(collection(window.db, 'training'));
+                    trainingSnap.forEach((doc) => {
+                        if (doc.id === officerId) {
+                            allOfficersData[officerId].training = doc.data().data || [];
+                        }
+                    });
+
+                    // Load performance
+                    const performanceSnap = await getDocs(collection(window.db, 'performance'));
+                    performanceSnap.forEach((doc) => {
+                        if (doc.id === officerId) {
+                            allOfficersData[officerId].performance = doc.data().data || [];
+                        }
+                    });
+
+                    // Load patrols
+                    const patrolsSnap = await getDocs(collection(window.db, 'patrols'));
+                    patrolsSnap.forEach((doc) => {
+                        if (doc.id === officerId) {
+                            allOfficersData[officerId].patrols = doc.data().data || [];
+                        }
+                    });
+                } catch (error) {
+                    console.error(`Error loading data for ${officerId}:`, error);
+                }
+            }
+
+            renderOfficerCards();
+            updateOverviewStats();
+        }
+
+        function renderOfficerCards() {
+            const container = document.getElementById('officerCards');
+            let html = '';
+
+            for (let officerId in allOfficersData) {
+                const data = allOfficersData[officerId];
+                const activeCases = data.cases.filter(c => c.status === 'Active').length;
+                const trainingCompleted = data.training.filter(t => t.completed).length;
+                const trainingPercent = data.training.length > 0 
+                    ? Math.round((trainingCompleted / data.training.length) * 100) 
+                    : 0;
+                const totalPatrolHours = data.patrols.reduce((sum, p) => sum + (p.hours || 0), 0);
+                const performanceScore = data.performance.reduce((sum, p) => sum + parseInt(p.value || 0), 0);
+
+                html += `
+                    <div class="officer-card" onclick="showOfficerDetails('${officerId}')">
+                        <div class="officer-header">
+                            <div>
+                                <div class="officer-name">${data.info.name}</div>
+                                <div class="officer-id">${officerId}</div>
+                                <div style="font-size: 0.9em; color: #6c757d; margin-top: 5px;">
+                                    ${data.info.rank} | ${data.info.unit}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="officer-stats">
+                            <div class="mini-stat">
+                                <div class="mini-stat-value">${activeCases}</div>
+                                <div class="mini-stat-label">Active Cases</div>
+                            </div>
+                            <div class="mini-stat">
+                                <div class="mini-stat-value">${trainingPercent}%</div>
+                                <div class="mini-stat-label">Training</div>
+                            </div>
+                            <div class="mini-stat">
+                                <div class="mini-stat-value">${Math.round(totalPatrolHours)}</div>
+                                <div class="mini-stat-label">Patrol Hours</div>
+                            </div>
+                            <div class="mini-stat">
+                                <div class="mini-stat-value">${performanceScore}</div>
+                                <div class="mini-stat-label">Performance</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html;
+        }
+
+        function updateOverviewStats() {
+            const totalOfficers = Object.keys(allOfficersData).length;
+            let totalCases = 0;
+            let totalTraining = 0;
+            let completedTraining = 0;
+            let totalPatrolHours = 0;
+
+            for (let officerId in allOfficersData) {
+                const data = allOfficersData[officerId];
+                totalCases += data.cases.filter(c => c.status === 'Active').length;
+                totalTraining += data.training.length;
+                completedTraining += data.training.filter(t => t.completed).length;
+                totalPatrolHours += data.patrols.reduce((sum, p) => sum + (p.hours || 0), 0);
+            }
+
+            const avgTraining = totalTraining > 0 
+                ? Math.round((completedTraining / totalTraining) * 100) 
+                : 0;
+
+            document.getElementById('totalOfficers').textContent = totalOfficers;
+            document.getElementById('totalCases').textContent = totalCases;
+            document.getElementById('avgTraining').textContent = avgTraining + '%';
+            document.getElementById('totalPatrolHours').textContent = Math.round(totalPatrolHours);
+            document.getElementById('lastUpdated').textContent = new Date().toLocaleString();
+        }
+
+        function showOfficerDetails(officerId) {
+            currentViewOfficer = officerId;
+            const data = allOfficersData[officerId];
+
+            document.getElementById('detailOfficerName').textContent = 
+                `${data.info.name} (${officerId}) - ${data.info.rank}`;
+
+            // Render cases
+            renderDetailList('detailCasesList', data.cases, (c) => `
+                <li class="item">
+                    <strong>Case #${c.number}</strong> - ${c.type}
+                    <br><small>${c.description}</small>
+                    <br><span class="status-badge status-${c.status.toLowerCase()}">${c.status}</span>
+                    <small style="color: #6c757d; margin-left: 10px;">${c.date}</small>
+                </li>
+            `);
+
+            // Render training
+            renderDetailList('detailTrainingList', data.training, (t) => `
+                <li class="item">
+                    <strong>${t.name}</strong> - ${t.category}
+                    <br><span class="status-badge ${t.completed ? 'status-completed' : 'status-pending'}">
+                        ${t.completed ? 'Completed' : 'In Progress'}
+                    </span>
+                </li>
+            `);
+
+            // Render performance
+            renderDetailList('detailPerformanceList', data.performance, (p) => `
+                <li class="item">
+                    <strong>${p.type}</strong> - Score: ${p.value}
+                    <br><small>${p.notes || 'No notes'}</small>
+                    <br><small style="color: #6c757d;">${p.date}</small>
+                </li>
+            `);
+
+            // Render patrols
+            renderDetailList('detailPatrolList', data.patrols, (p) => `
+                <li class="item">
+                    <strong>${p.date}</strong> - ${p.area}
+                    <br><small>${p.startTime} to ${p.endTime} (${p.hours} hours)</small>
+                    <br><small>${p.notes}</small>
+                </li>
+            `);
+
+            document.getElementById('overviewSection').style.display = 'none';
+            document.getElementById('detailsSection').classList.add('active');
+        }
+
+        function renderDetailList(elementId, data, template) {
+            const element = document.getElementById(elementId);
+            if (data.length === 0) {
+                element.innerHTML = '<li class="empty-state">No data available</li>';
+                return;
+            }
+            element.innerHTML = data.map(template).join('');
+        }
+
+        function showOverview() {
+            document.getElementById('overviewSection').style.display = 'block';
+            document.getElementById('detailsSection').classList.remove('active');
+        }
+
+        function showDetailTab(tabName) {
+            document.querySelectorAll('.detail-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.detail-content').forEach(content => {
+                content.classList.remove('active');
+            });
+
+            event.target.classList.add('active');
+            document.getElementById('detail' + tabName.charAt(0).toUpperCase() + tabName.slice(1)).classList.add('active');
+        }
+
+        function exportAllData() {
+            const dataStr = JSON.stringify(allOfficersData, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `police-data-export-${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                window.location.href = 'login.html';
+            }
+        }
+
+        // Load data on page load
+        window.onload = loadAllOfficersData;
+    </script>
+</body>
+</html>
